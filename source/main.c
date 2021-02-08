@@ -17,6 +17,7 @@ volatile unsigned char TimerFlag = 0;
 
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
+unsigned char tmpB = 0x00;
 
 void TimerOn(){
 	TCCR1B = 0x0B;
@@ -48,6 +49,47 @@ void TimerSet(unsigned long M){
 	_avr_timer_cntcurr = _avr_timer_M;	
 }
 
+enum States{start, init, led1, led2, led3} state;
+
+void Tick(){
+	
+	switch(state){
+		case start:
+			state = init;
+			break;
+		case init:
+			state = led1;
+			break;
+		case led1:
+			state = led2;
+			break;
+		case led2:
+			state = led3;
+			break;
+		case led3:
+			state = led1;
+			break;
+		default:
+			state = start;
+			break;	
+	}
+	switch(state){
+		case led1:
+			tmpB = 0x01;
+			break;
+		case led2:
+			tmpB = 0x02;
+			break;
+		case led3:
+			tmpB = 0x04;
+			break;
+		default:
+			break;
+	}
+	PORTB = tmpB;
+}
+
+
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRB = 0xFF; 
@@ -55,10 +97,12 @@ int main(void) {
 	TimerSet(1000);
 	TimerOn();
 	unsigned char tmpB = 0x00;
+	state = init;
     /* Insert your solution below */
     while (1) {
-	tmpB = ~tmpB;
-	PORTB = tmpB;
+	//tmpB = ~tmpB;
+	//PORTB = tmpB;
+	Tick();
 	while(!TimerFlag);
 	TimerFlag = 0;
     }
